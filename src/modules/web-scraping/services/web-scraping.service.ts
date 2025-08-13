@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IWebScrapingService } from '../interfaces/web-scraping.interface';
 import { DataSource } from 'typeorm';
 import { Doc } from 'src/database/entities';
@@ -19,7 +19,7 @@ export class WebScrapingService implements IWebScrapingService {
       await this.firecrawlService.getDocContent<ScrapCrawResponseDto>(url);
 
     if (!scrapingData.data?.length) {
-      return true;
+      throw new NotFoundException('NO_DOCUMENT_FOUND');
     }
 
     const metaData = first(scrapingData.data)?.metadata;
@@ -49,5 +49,11 @@ export class WebScrapingService implements IWebScrapingService {
     });
 
     return true;
+  }
+
+  async listWebScrapingDocs(): Promise<Doc[]> {
+    return this.dataSource.getRepository(Doc).find({
+      where: { isDeleted: false },
+    });
   }
 }
