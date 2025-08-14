@@ -3,14 +3,7 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class OpenAiAgentService {
-  private openAiAgent: OpenAI;
-
-  constructor() {
-    this.openAiAgent = new OpenAI({
-      apiKey: process.env.OPENAI_KEY,
-      baseURL: process.env.OPENAI_URL,
-    });
-  }
+  constructor(private readonly openAiAgent: OpenAI) {}
 
   async talk(input: string) {
     try {

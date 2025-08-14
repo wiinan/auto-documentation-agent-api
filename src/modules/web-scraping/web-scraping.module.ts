@@ -5,15 +5,23 @@ import { WebScrapingService } from './services/web-scraping.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Doc, DocContent } from 'src/database/entities';
 import { FirecrawlService } from 'src/gateways/firecrawl';
-import { OpenAiAgentService } from 'src/gateways/openai';
+import FirecrawlApp from '@mendable/firecrawl-js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Doc, DocContent])],
   controllers: [WebScrapingController],
   providers: [
     { provide: IWebScrapingService, useClass: WebScrapingService },
-    FirecrawlService,
-    OpenAiAgentService,
+    {
+      provide: FirecrawlService,
+      useFactory: () => {
+        const firecrawlApp = new FirecrawlApp({
+          apiKey: process.env.FIRECRAWL_KEY,
+        });
+
+        return new FirecrawlService(firecrawlApp);
+      },
+    },
   ],
 })
 export class WebScrapingModule {}

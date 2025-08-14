@@ -8,6 +8,7 @@ import { OpenAiChatGateway } from 'src/gateways/openai-chat';
 import { OpenAiController } from './controllers/openai.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import forFeatureDb from 'src/database/mongoose/for-feature.db';
+import OpenAI from 'openai';
 
 @Module({
   imports: [
@@ -20,7 +21,17 @@ import forFeatureDb from 'src/database/mongoose/for-feature.db';
       provide: IOpenAiService,
       useClass: OpenAiService,
     },
-    OpenAiAgentService,
+    {
+      provide: OpenAiAgentService,
+      useFactory: () => {
+        const openAi = new OpenAI({
+          apiKey: process.env.OPENAI_KEY,
+          baseURL: process.env.OPENAI_URL,
+        });
+
+        return new OpenAiAgentService(openAi);
+      },
+    },
   ],
   controllers: [OpenAiController],
 })
