@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Doc } from './doc.entity';
 
 @Entity('doc_contents')
@@ -24,6 +30,7 @@ export class DocContent {
   @Column({ default: false })
   isDeleted: boolean;
 
-  @ManyToOne(() => Doc, (doc) => doc.id)
+  @ManyToOne(() => Doc)
+  @JoinColumn({ name: 'docId', referencedColumnName: 'id' })
   doc: Doc;
 }

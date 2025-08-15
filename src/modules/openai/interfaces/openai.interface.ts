@@ -6,6 +6,6 @@ export abstract class IOpenAiService {
   abstract talkToAgent(
     data: z.infer<typeof talkWithAgentSchema>,
   ): Promise<string>;
-
   abstract getMessages(): Promise<Message[]>;
+  abstract trainingAgentAction(): Promise<void>;
 }

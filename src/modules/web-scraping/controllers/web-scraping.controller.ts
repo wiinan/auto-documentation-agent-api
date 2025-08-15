@@ -4,7 +4,7 @@ import { saveDocumentationSchema } from '../web-scraping.schema';
 import { IWebScrapingService } from '../interfaces/web-scraping.interface';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SaveDocumentationRequestDto } from '../web-scraping.dto';
-import { Doc } from 'src/database/entities';
+import { Doc } from 'src/database/typeorm/entities';
 
 @Controller('doc')
 export class WebScrapingController {

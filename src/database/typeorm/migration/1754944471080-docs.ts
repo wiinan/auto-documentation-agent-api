@@ -30,6 +30,21 @@ export class Docs1754944471080 implements MigrationInterface {
               isNullable: false,
             },
             {
+              name: 'status',
+              type: 'varchar',
+              isNullable: false,
+            },
+            {
+              name: 'modelName',
+              type: 'varchar',
+              isNullable: true,
+            },
+            {
+              name: 'fineTuneJobId',
+              type: 'varchar',
+              isNullable: true,
+            },
+            {
               name: 'createdAt',
               type: 'timestamp',
               default: 'now()',

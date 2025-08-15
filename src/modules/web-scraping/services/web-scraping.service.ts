@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IWebScrapingService } from '../interfaces/web-scraping.interface';
 import { DataSource } from 'typeorm';
-import { Doc } from 'src/database/entities';
+import { Doc } from 'src/database/typeorm/entities';
 import { FirecrawlService } from 'src/gateways/firecrawl';
 import { ScrapCrawResponseDto } from '../web-scraping.dto';
 import { first } from 'lodash';
-import { DocContent } from 'src/database/entities/doc-content.entity';
+import { DocContent } from 'src/database/typeorm/entities/doc-content.entity';
+import { DOC_STATUS } from 'src/constants/agent';
 
 @Injectable()
 export class WebScrapingService implements IWebScrapingService {
@@ -28,6 +29,7 @@ export class WebScrapingService implements IWebScrapingService {
       const docData = await entityManager.save(Doc, {
         name: metaData?.title,
         link: metaData?.sourceURL,
+        status: DOC_STATUS.OPEN,
       });
 
       if (!scrapingData.data) {

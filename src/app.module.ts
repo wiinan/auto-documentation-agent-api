@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { WebScrapingModule } from './modules/web-scraping/web-scraping.module';
 import { ConfigModule } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { TypeOrmModule } from './database/config';
 import { OpenAiModule } from './modules/openai/openai.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from './database/typeorm/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     MongooseModule.forRoot(process.env.MONGODB_URI || '', {
       dbName: 'dev_documentation',
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule,
     WebScrapingModule,
     OpenAiModule,

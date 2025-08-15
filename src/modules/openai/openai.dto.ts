@@ -12,3 +12,11 @@ export class TalkAgentRequestDto {
   })
   docId: number;
 }
+
+export type WebhookResponseDto = {
+  object: string;
+  id: string;
+  type: string;
+  created_at: number;
+  data: { id: string; fine_tuned_model: string };
+};
