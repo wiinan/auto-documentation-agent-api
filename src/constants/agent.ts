@@ -26,3 +26,6 @@ export enum WEBHOOK_EVENT_STATUS {
   'fine_tuning.job.failed' = DOC_STATUS.FAILED,
   'fine_tuning.job.cancelled' = DOC_STATUS.CANCELLED,
 }
+
+export const DEFAULT_NOT_FOUND_AGENT_MESSAGE =
+  'Não tenho conhecimento sobre isso. Por favor, verifique as documentações.';

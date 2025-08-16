@@ -6,11 +6,16 @@ import { OpenAiAgentService } from 'src/gateways/openai';
 import z from 'zod';
 import { talkWithAgentSchema } from '../openai.schema';
 import { Injectable } from '@nestjs/common';
-import { map } from 'lodash';
+import { first, map } from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { Message } from 'src/database/mongoose/schemas/message.schema';
 import { Model } from 'mongoose';
-import { CHAT_ROLES, CHAT_STATUS, DOC_STATUS } from 'src/constants/agent';
+import {
+  CHAT_ROLES,
+  CHAT_STATUS,
+  DEFAULT_NOT_FOUND_AGENT_MESSAGE,
+  DOC_STATUS,
+} from 'src/constants/agent';
 import { Utils } from 'src/helpers/utils';
 
 @Injectable()
@@ -63,7 +68,7 @@ export class OpenAiService implements IOpenAiService {
     });
 
     if (!doc) {
-      return '';
+      return DEFAULT_NOT_FOUND_AGENT_MESSAGE;
     }
 
     await this.MessageModel.create({
@@ -72,8 +77,7 @@ export class OpenAiService implements IOpenAiService {
       type: CHAT_ROLES.USER,
     });
 
-    const documentationItems =
-      doc.docContent[0].content || map(doc.docContent, 'content').join(' ');
+    const documentationItems = map(doc.docContent, 'content').join(' ');
 
     const response = await this.openAiAgentService.talk(
       `
@@ -86,13 +90,19 @@ export class OpenAiService implements IOpenAiService {
       doc.modelName,
     );
 
+    const responseText = first(response.choices)?.text;
+
+    if (!responseText) {
+      return DEFAULT_NOT_FOUND_AGENT_MESSAGE;
+    }
+
     await this.MessageModel.create({
-      message: response.choices[0].text || '',
+      message: responseText,
       status: CHAT_STATUS.SEND,
       type: CHAT_ROLES.AGENT,
     });
 
-    return response.choices[0].text || '';
+    return responseText;
   }
 
   async getMessages(): Promise<Message[]> {

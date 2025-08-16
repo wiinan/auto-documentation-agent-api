@@ -9,14 +9,14 @@ export class CronJobAgentAi {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async handleCron() {
-    this.logger.debug('Finance Cronjob Started');
+    this.logger.debug('CronJobAgentAi Cronjob Started');
 
     try {
       await this.openAiService.trainingAgentAction();
 
-      this.logger.debug('Finance Cronjob Finished with success');
+      this.logger.debug('CronJobAgentAi Cronjob Finished with success');
     } catch (error) {
-      this.logger.debug('Finance Cronjob Finished with error', error);
+      this.logger.debug('CronJobAgentAi Cronjob Finished with error', error);
     }
   }
 }
