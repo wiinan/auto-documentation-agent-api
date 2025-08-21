@@ -33,7 +33,7 @@ export class OpenAiChatGateway
   }
 
   handleDisconnect(@ConnectedSocket() client: Socket) {
-    console.log('Client disconnected', client.id);
+    this.logger.log('Client disconnected', client.id);
 
     this.server.emit('user-left', {
       message: `User left the chat: ${client.id}`,

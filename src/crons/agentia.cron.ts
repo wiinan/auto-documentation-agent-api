@@ -7,7 +7,7 @@ export class CronJobAgentAi {
   private readonly logger = new Logger(CronJobAgentAi.name);
   constructor(private readonly openAiService: IOpenAiService) {}
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async handleCron() {
     this.logger.debug('CronJobAgentAi Cronjob Started');
 

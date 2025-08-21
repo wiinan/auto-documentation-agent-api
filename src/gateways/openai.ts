@@ -35,10 +35,27 @@ export class OpenAiAgentService {
         model: process.env.OPENAI_MODEL || '',
       });
 
-      return agentData;
+      return agentData || { id: process.env.OPENAI_MODEL };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('OpenAiAgentService.talk ERROR');
+    }
+  }
+
+  async createEmbedding(input: string | string[]): Promise<number[]> {
+    try {
+      const { data } = await this.openAiAgent.embeddings.create({
+        input,
+        model: process.env.OPENAPI_EMBEDDING_MODEL || '',
+        encoding_format: 'base64',
+      });
+
+      const embeddingData = data[0].embedding;
+
+      return embeddingData;
     } catch (error) {
       console.log(error);
-      throw new BadRequestException('OpenAiAgentService.talk ERROR');
+      throw new BadRequestException('OpenAiAgentService.createEmbedding ERROR');
     }
   }
 }

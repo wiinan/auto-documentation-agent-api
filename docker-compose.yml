@@ -1,15 +1,17 @@
 name: dev_documentation
 services:
   postgres:
-    image: bitnami/postgresql:latest
+    image: pgvector/pgvector:pg17
     restart: always
     ports:
       - '5432:5432'
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
       POSTGRES_DB: dev_documentation
     volumes:
-      - pgdata:/bitnami/postgresql
+      - ./postgresql.conf:/etc/postgresql.conf
+      - ./pg-data:/var/lib/postgresql/data
   redis:
     image: redis:8.0-rc1
     restart: always
@@ -34,24 +36,40 @@ services:
       - type: bind
         source: ./data
         target: /data/db
-  mongo-express:
-    image: mongo-express:0.54.0
+  zipkin:
+    image: openzipkin/zipkin
     ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_PORT: 27017
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: 1234
-    links:
-      - mongo
-    depends_on:
-      - mongo
+      - "9411:9411"
+    depends_on: [otel-collector]
     networks:
-      - mongo-compose-network
+      - internal
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ${PWD}/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    networks:
+      - internal
+  server:
+    image: chromadb/chroma
+    volumes:
+      - chroma_data:/data
+    ports:
+      - "8000:8000"
+    networks:
+      - internal
+    environment:
+      - CHROMA_OPEN_TELEMETRY__ENDPOINT=http://otel-collector:4317/
+      - CHROMA_OPEN_TELEMETRY__SERVICE_NAME=chroma
+    depends_on:
+      - otel-collector
+      - zipkin
 
 networks:
   mongo-compose-network:
     driver: bridge
+  internal:
 
 volumes:
   pgdata:
+  chroma_data:

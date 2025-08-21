@@ -21,6 +21,9 @@ export class DocContent {
   @Column({ nullable: false })
   docId: number;
 
+  @Column({ nullable: false, type: 'tsvector' })
+  embedding: string;
+
   @Column({ default: new Date() })
   createdAt: Date;
 

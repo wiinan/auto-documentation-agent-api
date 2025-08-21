@@ -4,6 +4,8 @@ import OpenAI from 'openai';
 import { OpenAiAgentService } from './openai';
 
 describe('OpenAiAgentService', () => {
+  process.env.OPENAI_MODEL = 'gpt-3.5-turbo';
+
   let service: OpenAiAgentService;
   let mockCreate: jest.Mock;
 
@@ -16,7 +18,7 @@ describe('OpenAiAgentService', () => {
         {
           provide: OpenAI,
           useValue: {
-            responses: { create: mockCreate },
+            completions: { create: mockCreate },
           },
         },
       ],
@@ -38,7 +40,10 @@ describe('OpenAiAgentService', () => {
 
       expect(mockCreate).toHaveBeenCalledWith({
         model: process.env.OPENAI_MODEL,
-        input: 'Oi',
+        prompt: 'Oi',
+        temperature: 0.2,
+        top_p: 1,
+        max_tokens: 4000,
       });
       expect(result).toBe(fakeResponse);
     });

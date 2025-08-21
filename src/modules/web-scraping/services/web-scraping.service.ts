@@ -3,17 +3,70 @@ import { IWebScrapingService } from '../interfaces/web-scraping.interface';
 import { DataSource } from 'typeorm';
 import { Doc } from 'src/database/typeorm/entities';
 import { FirecrawlService } from 'src/gateways/firecrawl';
-import { ScrapCrawResponseDto } from '../web-scraping.dto';
+import { ScrapCrawResponseDto, ScrapDataDto } from '../web-scraping.dto';
 import { first } from 'lodash';
 import { DocContent } from 'src/database/typeorm/entities/doc-content.entity';
 import { DOC_STATUS } from 'src/constants/agent';
+import { LangChainService } from 'src/modules/langchain/langchain.service';
+import { OpenAiAgentService } from 'src/gateways/openai';
+import { Utils } from 'src/helpers/utils';
 
 @Injectable()
 export class WebScrapingService implements IWebScrapingService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly firecrawlService: FirecrawlService,
+    private readonly langChainService: LangChainService,
+    private readonly openAiAgentService: OpenAiAgentService,
   ) {}
+
+  private async saveDocs(scrapingData: ScrapDataDto[], items: string[]) {
+    const metaData = first(scrapingData)?.metadata;
+
+    await this.dataSource.transaction(async (entityManager) => {
+      const docContentItems: Partial<DocContent>[] = [];
+      const docData = await entityManager.save(Doc, {
+        name: metaData?.title,
+        link: metaData?.sourceURL,
+        status: DOC_STATUS.OPEN,
+      });
+
+      for (const content of items) {
+        const embedding =
+          await this.openAiAgentService.createEmbedding(content);
+
+        docContentItems.push({
+          content,
+          embedding: Utils.parseEmbeddingsToVectorQuery(embedding),
+          docId: docData.id,
+          link: metaData?.sourceURL,
+        });
+      }
+
+      await entityManager
+        .createQueryBuilder()
+        .insert()
+        .into(DocContent)
+        .values(docContentItems)
+        .execute();
+    });
+  }
+
+  private async spliterScrapingContent(
+    scrapingData: ScrapDataDto[],
+  ): Promise<string[]> {
+    const items: string[] = [];
+
+    for (const item of scrapingData) {
+      const documentSpliter = await this.langChainService.textSpliter(
+        item.markdown || '',
+      );
+
+      items.push(...documentSpliter);
+    }
+
+    return items;
+  }
 
   async saveDocAction(url: string): Promise<boolean> {
     const scrapingData =
@@ -23,32 +76,11 @@ export class WebScrapingService implements IWebScrapingService {
       throw new NotFoundException('NO_DOCUMENT_FOUND');
     }
 
-    const metaData = first(scrapingData.data)?.metadata;
+    const items: string[] = await this.spliterScrapingContent(
+      scrapingData.data,
+    );
 
-    await this.dataSource.transaction(async (entityManager) => {
-      const docData = await entityManager.save(Doc, {
-        name: metaData?.title,
-        link: metaData?.sourceURL,
-        status: DOC_STATUS.OPEN,
-      });
-
-      if (!scrapingData.data) {
-        return;
-      }
-
-      const docContentItems = scrapingData.data.map((scrap) => ({
-        docId: docData.id,
-        content: scrap.markdown,
-        link: scrap.metadata?.sourceURL,
-      }));
-
-      await entityManager
-        .createQueryBuilder()
-        .insert()
-        .into(DocContent)
-        .values(docContentItems)
-        .execute();
-    });
+    await this.saveDocs(scrapingData.data, items);
 
     return true;
   }

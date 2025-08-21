@@ -4,6 +4,7 @@
 /build
 /data
 /src/temp
+/pg-data
 
 # Logs
 logs

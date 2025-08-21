@@ -24,3 +24,8 @@ export type ScrapDataDto = {
 export type ScrapCrawResponseDto = {
   data?: Array<ScrapDataDto>;
 } & ScrapeResponse;
+
+export type vectorStoreDocumentDto = {
+  content: string;
+  embedding: number[];
+};

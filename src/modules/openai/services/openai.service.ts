@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOpenAiService } from '../interfaces/openai.interface';
 import { Doc, DocContent } from 'src/database/typeorm/entities';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { OpenAiAgentService } from 'src/gateways/openai';
 import z from 'zod';
 import { talkWithAgentSchema } from '../openai.schema';
@@ -23,8 +23,7 @@ export class OpenAiService implements IOpenAiService {
   constructor(
     @InjectRepository(Doc)
     private readonly docModel: Repository<Doc>,
-    @InjectRepository(DocContent)
-    private readonly docContentModel: Repository<DocContent>,
+    private readonly dataSource: DataSource,
     @InjectModel(Message.name)
     private readonly MessageModel: Model<Message>,
     private readonly openAiAgentService: OpenAiAgentService,
@@ -61,40 +60,55 @@ export class OpenAiService implements IOpenAiService {
       where: {
         id: docId,
         isDeleted: false,
-        docContent: { isDeleted: false },
+        status: DOC_STATUS.COMPLETED,
       },
-      relations: ['docContent'],
-      select: ['id', 'modelName', 'docContent'],
+      select: ['id', 'modelName'],
     });
 
     if (!doc) {
       return DEFAULT_NOT_FOUND_AGENT_MESSAGE;
     }
 
-    await this.MessageModel.create({
-      message: text,
-      status: CHAT_STATUS.SEND,
-      type: CHAT_ROLES.USER,
-    });
+    const [queryEmbeddings] = await Promise.all([
+      this.openAiAgentService.createEmbedding(text),
+      this.MessageModel.create({
+        message: text,
+        status: CHAT_STATUS.SEND,
+        type: CHAT_ROLES.USER,
+      }),
+    ]);
 
-    const documentationItems = map(doc.docContent, 'content').join(' ');
+    const docContents: DocContent[] = await this.dataSource.query(
+      `
+        SELECT
+          id, content
+        FROM doc_contents
+        WHERE
+          "docId" = $3 AND
+          "isDeleted" IS false
+        ORDER BY
+          embedding <#> $1::vector
+        LIMIT $2
+        `,
+      [Utils.parseEmbeddingsToVectorQuery(queryEmbeddings), 1, doc.id],
+    );
+
+    const documentationItems = map(docContents, 'content').join(' ');
 
     const response = await this.openAiAgentService.talk(
       `
             Sendo um especialista em uma documentação de uma empresa,
-            Com base nessa documentação abaixo:
+            Com base na documentação abaixo:
             ${documentationItems}.
             responda a Pergunta: ${text}
+            Caso a documentação esteja em outro idioma, traduza para Brasileiro
             Caso a resposta para a pergunta não esteja na documentação diga que não sabe!
         `,
       doc.modelName,
     );
 
-    const responseText = first(response.choices)?.text;
-
-    if (!responseText) {
-      return DEFAULT_NOT_FOUND_AGENT_MESSAGE;
-    }
+    const responseText =
+      first(response.choices)?.text || DEFAULT_NOT_FOUND_AGENT_MESSAGE;
 
     await this.MessageModel.create({
       message: responseText,

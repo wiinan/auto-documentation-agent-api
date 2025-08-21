@@ -14,7 +14,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
     }),
     MongooseModule.forRoot(process.env.MONGODB_URI || '', {
-      dbName: 'dev_documentation',
+      dbName: process.env.MONGODB_DATABASE,
     }),
     ScheduleModule.forRoot(),
     TypeOrmModule,

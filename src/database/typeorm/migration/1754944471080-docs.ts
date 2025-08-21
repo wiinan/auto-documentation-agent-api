@@ -110,6 +110,10 @@ export class Docs1754944471080 implements MigrationInterface {
       ),
     ]);
 
+    await queryRunner.query(
+      `ALTER TABLE "doc_contents" ADD COLUMN "embedding" vector(768)`,
+    );
+
     await queryRunner.createForeignKey(
       'doc_contents',
       new TableForeignKey({

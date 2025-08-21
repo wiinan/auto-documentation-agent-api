@@ -30,4 +30,8 @@ export class Utils {
 
     return filePath;
   }
+
+  static parseEmbeddingsToVectorQuery(embedding: number[]): string {
+    return `[${embedding.toString()}]`;
+  }
 }
