@@ -23,7 +23,7 @@ export class OpenAiAgentService {
     }
   }
 
-  async fineTuneAction(filePath: string) {
+  async fineTuneAction(filePath: string): Promise<{ id: string }> {
     try {
       const file = await this.openAiAgent.files.create({
         file: createReadStream(filePath),

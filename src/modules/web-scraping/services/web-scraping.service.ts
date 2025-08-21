@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { IWebScrapingService } from '../interfaces/web-scraping.interface';
 import { DataSource } from 'typeorm';
 import { Doc } from 'src/database/typeorm/entities';
@@ -20,12 +24,19 @@ export class WebScrapingService implements IWebScrapingService {
     private readonly openAiAgentService: OpenAiAgentService,
   ) {}
 
-  private async saveDocs(scrapingData: ScrapDataDto[], items: string[]) {
+  private async saveDocs(
+    scrapingData: ScrapDataDto[],
+    items: string[],
+  ): Promise<void> {
     const metaData = first(scrapingData)?.metadata;
+    const docContentItems: Partial<DocContent>[] = [];
+    const entityManager = this.dataSource.createQueryRunner();
 
-    await this.dataSource.transaction(async (entityManager) => {
-      const docContentItems: Partial<DocContent>[] = [];
-      const docData = await entityManager.save(Doc, {
+    await entityManager.connect();
+    await entityManager.startTransaction();
+
+    try {
+      const docData = await entityManager.manager.save(Doc, {
         name: metaData?.title,
         link: metaData?.sourceURL,
         status: DOC_STATUS.OPEN,
@@ -43,13 +54,20 @@ export class WebScrapingService implements IWebScrapingService {
         });
       }
 
-      await entityManager
+      await entityManager.manager
         .createQueryBuilder()
         .insert()
         .into(DocContent)
         .values(docContentItems)
         .execute();
-    });
+
+      await entityManager.commitTransaction();
+    } catch {
+      await entityManager.rollbackTransaction();
+      throw new BadRequestException('BAD_REQUEST');
+    } finally {
+      await entityManager.release();
+    }
   }
 
   private async spliterScrapingContent(
