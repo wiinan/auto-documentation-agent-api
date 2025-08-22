@@ -57,18 +57,25 @@ $ yarn run test:e2e
 $ yarn run test:cov
 ```
 
-## Deployment
+## Resume
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+API de Web Scraping e Treinamento de Modelos (NestJS + TypeORM)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+API em NestJS que permite enviar URLs de documentações, realizar web scraping completo com Firecrawl, salvar os dados em um banco vetorial e treinar modelos de linguagem (MML) para RAG e fine-tuning.
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
+Funcionalidades
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Envio de URLs e scraping automático de todos os sublinks.
+
+Armazenamento de conteúdo em banco vetorial para buscas semânticas.
+
+Treinamento e fine-tuning de modelos de linguagem para responder perguntas sobre a documentação.
+
+Estrutura modular, escalável e pronta para integrar novas fontes e modelos.
+
+Tecnologias
+
+NestJS | TypeORM | Firecrawl | Banco Vetorial | Machine Learning (MML/RAG)
 
 ## Resources
 
@@ -96,3 +103,4 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
